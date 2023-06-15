@@ -10,6 +10,8 @@
 #include "GeneticoSimple.h"
 #include <fmt/core.h>
 #include <fmt/ranges.h>
+#include <mpi.h>
+
 
 GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
    problema = p;
@@ -31,12 +33,14 @@ GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
 
    // Crear directorio de salida, si aún no existe.
    /*** En la versión CONCURRENTE/MPI solamente la isla RAIZ debería crear el directorio de salida. ***/
-   if ( !stats.dirExists("./salidafinal/") ) {
+   if(myRank == 0){
+      if ( !stats.dirExists("./salidafinal/") ) {
       const int dir_err = mkdir("./salidafinal/", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
       if (dir_err == -1 ) {
          cerr << "\nNo se pudo crear el directorio de salida '/salidafinal/" << "\n\n";
          exit(1);
       }
+   }
    }
    
    /*** En la versión CONCURRENTE/MPI, todas las islas deben esperar la creación del directorio de salida con Barrier. ***/
