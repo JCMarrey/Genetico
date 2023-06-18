@@ -11,6 +11,9 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 #include <mpi.h>
+#include <iostream>
+#include <cstdlib>
+#include <stdio.h>
 
 
 GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
@@ -161,6 +164,49 @@ void GeneticoSimple::inicalizarPob()
 
 /* Acá deben podrían poner sus métodos nuevos para la versión CONCURRENTE/MPI */
 
+void GeneticoSimple::seleccionaIndividuos(){
+
+   int i, j, sel;
+   vector <int> poblacion;
+
+   for(i=0; i<popSize; i++){
+      poblacion.push_back(i);
+   }
+
+   j = popSize-1;
+   for(i=0; i<nMigrantes; i++){
+
+      sel = rand() % j;
+      elegidos.push_back(poblacion[sel]);
+      poblacion[sel] = (poblacion[j]);
+      j--;
+   }
+}
+
+void GeneticoSimple::migracion(Individuo* pop){
+
+   int i, pos;
+   double bufSize = nMigrantes *(problema->numVariables()+1) * sizeof(double); 
+   char* buffer = new char[int(bufSize)]; 
+
+   // empaqueta migrantes
+   pos = 0;
+   for (int i=0; i<nMigrantes; i++){
+
+      MPI_Pack(newpop[elegidos[i]].x.data() , problema->numVariables(), MPI_DOUBLE, buffer, bufSize, &position, MPI_COMM_WORLD);
+      MPI_Pack(&(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, buffer, bufSize, &position, MPI_COMM_WORLD);
+   }
+
+   // desempaqueta inmigrantes
+   pos = 0;
+   for (int i=0; i<nMigrantes; i++){
+
+      MPI_Unpack(buffer, bufSize, &position, newpop[elegidos[i]].x.data(), problema->numVariables(), MPI_DOUBLE, MPI_COMM_WORLD);
+      MPI_Unpack(buffer, bufSize, &position, &(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, MPI_COMM_WORLD);
+
+      newpop[elegidos[i]].x2cromosoma(problema);
+   }
+}
 
 /*
  **************************************************************
@@ -168,12 +214,6 @@ void GeneticoSimple::inicalizarPob()
  *
  *
  **/
-
-
-
-
-
-
 
 
 

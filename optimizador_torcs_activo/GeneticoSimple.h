@@ -44,6 +44,8 @@ public:
 
 private:
    
+   void seleccionaIndividuos();
+
    void migracion(Individuo* pop);
    void obtenElegidos(vector<int>& elegidos, int nMigrantes);
    void unionPoblaciones(Individuo* pop);
@@ -96,10 +98,11 @@ private:
    double tiempoMaximo;        // PEOR tiempo en terminar la carrera en TORCS.
 
    /* Para la migración */
-   vector<int> elegidos;
+   vector <int> elegidos;
    char* buffer;
    int bufSize;
    int myRank;
+   int nPro;
    int numIslas;
 };
 

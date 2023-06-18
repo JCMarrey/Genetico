@@ -23,6 +23,11 @@ int main( int argc, char *argv [] )
     * Para la versión secuencial se usa serverID=0, PERO
     * para la versión concurrente serverID debe ser igual a myRank.
     */
+    
+     MPI_Init(&argc, &argv);
+     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+     MPI_Comm_size(MPI_COMM_WORLD, &nPro);
+
    int serverID = 0;
 
    /* Aquí se crea la instancia de TorcsFun con el serverID indicado. */
@@ -50,7 +55,7 @@ int main( int argc, char *argv [] )
    ga.optimizar();
 
    delete problema;
-
+   MPI_Finalize();
 
    return 0;
 }
