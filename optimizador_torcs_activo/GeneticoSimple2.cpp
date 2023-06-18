@@ -17,10 +17,12 @@ GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
    problema = p;
    popSize = params.popSize;
    Gmax = params.Gmax;
-   Pc = params.Pc;
-   Pm = params.Pm;
+   Pc = params.Pc;                                                      
+   Pm = params.Pm;         
    precision = params.precision;
-
+   nMigrantes = params.nMigrantes; 
+   tamEpoca = parmas.tamEpoca;  
+    
    random_device rd;
    rng.seed(rd());
 
