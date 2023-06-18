@@ -24,7 +24,7 @@ GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
    Pm = params.Pm;         
    precision = params.precision;
    nMigrantes = params.nMigrantes; 
-   tamEpoca = parmas.tamEpoca;  
+   tamEpoca = params.tamEpoca;  
     
    random_device rd;
    rng.seed(rd());
@@ -193,16 +193,16 @@ void GeneticoSimple::migracion(Individuo* pop){
    pos = 0;
    for (int i=0; i<nMigrantes; i++){
 
-      MPI_Pack(newpop[elegidos[i]].x.data() , problema->numVariables(), MPI_DOUBLE, buffer, bufSize, &position, MPI_COMM_WORLD);
-      MPI_Pack(&(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, buffer, bufSize, &position, MPI_COMM_WORLD);
+      MPI_Pack(newpop[elegidos[i]].x.data() , problema->numVariables(), MPI_DOUBLE, buffer, bufSize, &pos, MPI_COMM_WORLD);
+      MPI_Pack(&(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, buffer, bufSize, &pos, MPI_COMM_WORLD);
    }
 
    // desempaqueta inmigrantes
    pos = 0;
    for (int i=0; i<nMigrantes; i++){
 
-      MPI_Unpack(buffer, bufSize, &position, newpop[elegidos[i]].x.data(), problema->numVariables(), MPI_DOUBLE, MPI_COMM_WORLD);
-      MPI_Unpack(buffer, bufSize, &position, &(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, MPI_COMM_WORLD);
+      MPI_Unpack(buffer, bufSize, &pos, newpop[elegidos[i]].x.data(), problema->numVariables(), MPI_DOUBLE, MPI_COMM_WORLD);
+      MPI_Unpack(buffer, bufSize, &pos, &(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, MPI_COMM_WORLD);
 
       newpop[elegidos[i]].x2cromosoma(problema);
    }

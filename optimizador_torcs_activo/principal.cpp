@@ -10,7 +10,7 @@
 // $> mpic++ -I./problemas/ ./problemas/*.cpp *.cpp -lfmt -o genetico
 
 #include <iostream>
-//#include <mpi.h>
+#include <mpi.h>
 #include "GeneticoSimple.h"
 #include "TorcsFun.h"
 #include "CannonFun.h"
@@ -24,11 +24,12 @@ int main( int argc, char *argv [] )
     * para la versión concurrente serverID debe ser igual a myRank.
     */
     
+     int serverID, nPro;
      MPI_Init(&argc, &argv);
-     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+     MPI_Comm_rank(MPI_COMM_WORLD, &serverID);
      MPI_Comm_size(MPI_COMM_WORLD, &nPro);
 
-   int serverID = 0;
+  
 
    /* Aquí se crea la instancia de TorcsFun con el serverID indicado. */
    ProblemaOptim* problema = new TorcsFun(serverID);
@@ -59,3 +60,4 @@ int main( int argc, char *argv [] )
 
    return 0;
 }
+
