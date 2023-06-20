@@ -47,7 +47,7 @@ private:
    void seleccionaIndividuos();
 
    void migracion(Individuo* pop);
-   void obtenElegidos(vector<int>& elegidos, int nMigrantes);
+   void elegidos(vector<int>& elegidos, int nMigrantes);
    void unionPoblaciones(Individuo* pop);
    
    void inicalizarPob();

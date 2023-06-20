@@ -49,6 +49,8 @@ GeneticoSimple::GeneticoSimple(ProblemaOptim* p, ParamsGA& params) {
    }
    
    /*** En la versión CONCURRENTE/MPI, todas las islas deben esperar la creación del directorio de salida con Barrier. ***/
+   MPI_Barrier(MPI_COMM_WORLD);
+
 }
 
 GeneticoSimple::~GeneticoSimple() {
@@ -84,7 +86,12 @@ void GeneticoSimple::optimizar()
 
       /* Evaluar la nueva generación */
       evaluarPoblacion(newpop);
+
       elitismo(newpop, gen); // Encontrar el mejor individuo.
+
+      if(gen %  tamEpoca == 0){
+         migracion(newpop); //^
+      }
 
       /* Calcular las estadísticas sobre la aptitud en la nueva generación */
       stats.statistics(newpop, popSize);
@@ -98,6 +105,52 @@ void GeneticoSimple::optimizar()
       oldpop = newpop;
       newpop = temp;
    }
+
+
+
+
+   /*se hace la unión de todos los individuos^..
+
+   int pos = 0;
+   //Recibe los datos para concatenar..
+   if(myRank == 0){
+      double bufSize = nMigrantes *(problema->numVariables()+1) * sizeof(double); 
+      char* buffer = new char[int(bufSize)];
+
+      //copiando 1ra parte de una población..
+      for(int i = 0; i< popSize; i++){
+         globalpop[i] = oldpop[i];
+      }
+      cout <<"recibiendo buffers"<< endl;
+      for(int i = 0; i; < numDemes ; i++ ){
+         MPI_Recv(buffer, bufSize, MPI_PACKED, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+         pos = 0;
+         for(int j = 0; j < popSize; j++){                       
+               MPI_Unpack(buffer, bufSize, &pos,   globalpop[(popSize * i) + j].x.data() , problema->numVariables(), MPI_DOUBLE, MPI_COMM_WORLD);
+               MPI_Unpack(buffer, bufSize, &pos, &(globalpop[(popSize * i) + j].aptitud) , 1 , MPI_DOUBLE, MPI_COMM_WORLD);
+               globalpop[(popSize * i) + j].x2cromosoma(problema);
+         }
+      }   
+       cout << "Soy la isla 0 recibi y desempaquete todos los buffers..." << endl;
+
+   }else{
+      char* buffer = new char[popSize];
+         //Envio mi buffer final al 0
+         // MPI_Send(buffer,  position, MPI_PACKED, myRank+1, myRank, MPI_COMM_WORLD);
+         position = 0;
+         cout << "Soy la isla " << myRank << " enpaquetando datos..." << endl;
+         for(int i = 0; i < popSize; i++){
+            MPI_Pack( oldpop[i].x.data(), problema->numVariables() , MPI_DOUBLE, buffer, popSize, &pos, MPI_COMM_WORLD);
+            MPI_Pack(&(oldpop[i].eval) , 1 , MPI_DOUBLE, buffer, popSize, &pos, MPI_COMM_WORLD);
+            MPI_Pack(&(oldpop[i].cons[0]) , 1 , MPI_DOUBLE, buffer, popSize, &pos, MPI_COMM_WORLD);
+         }
+              
+         cout << "Soy la isla " << myRank << " enviando buffer..." << endl;
+         MPI_Send(buffer, popSize, MPI_PACKED, 0, 0, MPI_COMM_WORLD);
+   }
+*/
+
+
 
 
    // Para dejar las variables (PESOS) de la población final en este archivo.
@@ -159,6 +212,9 @@ void GeneticoSimple::inicalizarPob()
    }
 
    Pm = 1.0 / oldpop[0].chromoSize;
+   /*for(int i = 0; i < popSize*numIslas; i++){
+      globalpop[i].insuflar(problema,precision);
+   }* ^/ 
 }
 
 
@@ -173,7 +229,7 @@ void GeneticoSimple::seleccionaIndividuos(){
       poblacion.push_back(i);
    }
 
-   j = popSize-1;
+   j = popSize-1; //final
    for(i=0; i<nMigrantes; i++){
 
       sel = rand() % j;
@@ -185,17 +241,45 @@ void GeneticoSimple::seleccionaIndividuos(){
 
 void GeneticoSimple::migracion(Individuo* pop){
 
+   cout << "AQUÍ SE HACE LA MIGRACIÓN...  " << 
+
    int i, pos;
    double bufSize = nMigrantes *(problema->numVariables()+1) * sizeof(double); 
-   char* buffer = new char[int(bufSize)]; 
+   char* buffer = new char[int(bufSize)];   
 
    // empaqueta migrantes
    pos = 0;
+
+   //seleccionar idividusos migrandes de la población
+   seleccionaIndividuos();
+
+   //enviar individuos seleccionados
    for (int i=0; i<nMigrantes; i++){
 
       MPI_Pack(newpop[elegidos[i]].x.data() , problema->numVariables(), MPI_DOUBLE, buffer, bufSize, &pos, MPI_COMM_WORLD);
       MPI_Pack(&(newpop[elegidos[i]].aptitud), 1, MPI_DOUBLE, buffer, bufSize, &pos, MPI_COMM_WORLD);
+      
    }
+   /*^
+   if(myRank == numIslas-1){
+      //Si es la ultima isla entonces envia al primero 
+       MPI_Send(buffer,  pos, MPI_PACKED, 0, myRank, MPI_COMM_WORLD);
+
+   } else{
+      //si no, entonces envia al siguiente
+       MPI_Send(buffer,  pos, MPI_PACKED, myRank+1, myRank, MPI_COMM_WORLD);
+   }*/   
+
+
+   // RECIBIR INDIVIUOS.
+
+   /*if(myRank == 0){ ^
+      //Si mi rank es 0 entonces recibo de numDemes-1
+      MPI_Recv(buffer, bufSize, MPI_PACKED , numDemes-1,  numDemes-1, MPI_COMM_WORLD, NULL);
+
+   }else{
+      MPI_Recv(buffer, bufSize, MPI_PACKED , myRank-1,  myRank-1, MPI_COMM_WORLD, NULL);
+   }*/
 
    // desempaqueta inmigrantes
    pos = 0;
@@ -206,6 +290,12 @@ void GeneticoSimple::migracion(Individuo* pop){
 
       newpop[elegidos[i]].x2cromosoma(problema);
    }
+
+
+
+   //INSERTAR INDIVIDUOS QUE DEJARAN SU LUGAR....
+   
+
 }
 
 /*
