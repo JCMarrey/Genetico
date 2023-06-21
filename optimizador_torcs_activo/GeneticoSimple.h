@@ -19,6 +19,7 @@
 #include <random>
 #include <sys/stat.h>
 
+
 #define RAIZ 0
 
 using namespace std;
@@ -47,7 +48,7 @@ private:
    void seleccionaIndividuos();
 
    void migracion(Individuo* pop);
-   void elegidos(vector<int>& elegidos, int nMigrantes);
+   void obtenElegidos(vector<int>& elegidos, int nMigrantes);
    void unionPoblaciones(Individuo* pop);
    
    void inicalizarPob();
@@ -102,9 +103,12 @@ private:
    char* buffer;
    int bufSize;
    int myRank;
-   int nPro;
+
    int numIslas;
+
 };
 
 
+
 #endif
+
